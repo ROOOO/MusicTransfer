@@ -5,7 +5,7 @@ const path = require('path');
 const useMd5 = false;
 
 var LocalPath = '/Users/king/Music/网易云音乐';
-var PlayerPath = '/Volumes/Untitled/MUSIC';
+var PlayerPath = '/Volumes/WALKMAN/MUSIC';
 var localFiles = {};
 var playerFiles = {};
 
@@ -30,19 +30,21 @@ function readFiles(pathName, dict, sync) {
                   dict[hash] = path.basename(fileName);
                   ++count;
                   console.log('(%d/%d) %s, %s', count, length, path.basename(fileName), hash);
+                  resolve();
                 });
               } else {
                 var hash = md5File.sync(f);
                 dict[hash] = path.basename(f);
                 ++count;
                 console.log('(%d/%d) %s, %s', count, length, path.basename(f), hash);
+                resolve();
               }
             } else {
               dict[path.basename(f)] = path.basename(f);
               ++count;
               console.log('(%d/%d) %s', count, length, path.basename(f));
+              resolve();
             }
-            resolve();
           }));  
         } else {
           --length;
