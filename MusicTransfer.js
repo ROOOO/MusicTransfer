@@ -1,6 +1,7 @@
 const fs = require('fs');
 const md5File = require('md5-file');
 const path = require('path');
+const exec = require('child_process').execSync;
 
 const useMd5 = false;
 
@@ -8,6 +9,31 @@ var LocalPath = '/Users/king/Music/网易云音乐';
 var PlayerPath = '/Volumes/WALKMAN/MUSIC';
 var localFiles = {};
 var playerFiles = {};
+
+function convertNcm(pathName) {
+  console.log('converting ncm...');
+  return new Promise((resolve) => {
+    fs.readdir(pathName, {withFileTypes: true}, (err, dirent) => {
+      if (Object.keys(dirent).length === 0) {
+        resolve();
+        return;
+      }
+      var ncms = [];
+      dirent.forEach((d) => {
+        if (d.isFile() && d.name.endsWith('.ncm')) {
+          ncms.push(path.join(pathName, d.name));
+        }
+      });
+      let count = 0;
+      let length = ncms.length;
+      ncms.forEach((ncm) => {
+        console.log('(%d/%d) %s', ++count, length, ncm);
+        exec('./ncmdump "' + ncm + '"');
+        resolve();
+      });
+    });
+  });
+}
 
 function readFiles(pathName, dict, sync) {
   console.log(pathName);
@@ -22,7 +48,7 @@ function readFiles(pathName, dict, sync) {
       var count = 0;
       dirent.forEach((d) => {
         let f = path.join(pathName, d.name);
-        if (d.isFile() && !d.name.startsWith('.')) {
+        if (d.isFile() && !d.name.startsWith('.') && !d.name.endsWith('.ncm')) {
           p.push(new Promise((resolve) => {
             if (useMd5) {
               if (!sync) {
@@ -118,7 +144,10 @@ function CopyFiles() {
   });
 }
 
-readFiles(LocalPath, localFiles, false)
+convertNcm(LocalPath)
+  .then(() => {
+    return readFiles(LocalPath, localFiles, false);
+  })
   .then(function () {
     return delPlayerFiles();
   })
